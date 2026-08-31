@@ -20,3 +20,4 @@ class GraphState(TypedDict):
     requirement: str
     generated_cases: list[TestCase]
     skeletons: list[PlaywrightSkeleton]
+    run_metadata: dict

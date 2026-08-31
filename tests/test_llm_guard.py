@@ -83,6 +83,18 @@ def test_succeeds_immediately_with_no_errors():
 
     assert result.text == "clean response"
     assert result.attempts == 1
+    assert result.failure_class == "clean"
+
+
+@patch("time.sleep", return_value=None)
+def test_failure_class_is_retried_then_succeeded_after_retry(mock_sleep):
+    client = MagicMock()
+    client.messages.create.side_effect = [_rate_limit_error(), _mock_response("ok")]
+
+    result = guarded_call(client, "claude-sonnet-4-5", "test prompt", max_tokens=100)
+
+    assert result.attempts == 2
+    assert result.failure_class == "retried_then_succeeded"
 
 
 def test_parse_json_response_strips_markdown_fences():
