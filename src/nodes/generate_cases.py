@@ -1,7 +1,11 @@
+import logging
+
 import anthropic
 
 from ..state import GraphState
 from ..llm_guard import guarded_call, parse_json_response
+
+logger = logging.getLogger("testgen_graph")
 
 MODEL = "claude-sonnet-4-5"  # match whatever model string your eval-harness uses
 
@@ -33,6 +37,22 @@ def generate_cases(state: GraphState) -> GraphState:
     prompt = RUBRIC_PROMPT.format(requirement=state["requirement"])
 
     result = guarded_call(client, MODEL, prompt, max_tokens=2000)
-    cases = parse_json_response(result.text)
 
-    return {**state, "generated_cases": cases}
+    try:
+        cases = parse_json_response(result.text)
+    except ValueError:
+        run_metadata = {
+            "failure_class": "malformed_json",
+            "attempts": result.attempts,
+            "latency_s": result.latency_s,
+        }
+        logger.error("generate_cases run_metadata=%s", run_metadata)
+        raise
+
+    run_metadata = {
+        "failure_class": result.failure_class,
+        "attempts": result.attempts,
+        "latency_s": result.latency_s,
+    }
+
+    return {**state, "generated_cases": cases, "run_metadata": run_metadata}

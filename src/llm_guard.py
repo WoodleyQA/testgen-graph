@@ -35,6 +35,7 @@ class CallResult:
     latency_s: float
     estimated_cost_usd: float
     attempts: int
+    failure_class: str
 
 
 def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -42,6 +43,10 @@ def _estimate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
     if not rates:
         return 0.0
     return (input_tokens / 1_000_000) * rates["input"] + (output_tokens / 1_000_000) * rates["output"]
+
+
+def _classify_call(attempts: int) -> str:
+    return "clean" if attempts == 1 else "retried_then_succeeded"
 
 
 def guarded_call(
@@ -87,6 +92,7 @@ def guarded_call(
                 latency_s=latency,
                 estimated_cost_usd=cost,
                 attempts=attempt,
+                failure_class=_classify_call(attempt),
             )
 
         except (anthropic.RateLimitError, anthropic.APITimeoutError, anthropic.APIConnectionError) as e:
@@ -123,6 +129,7 @@ def log_state_transition(node_name: str, state: dict) -> None:
         "generated_cases_count": len(state.get("generated_cases") or []),
         "generated_case_ids": [c.get("id") for c in (state.get("generated_cases") or [])],
         "skeletons_count": len(state.get("skeletons") or []),
+        "failure_class": (state.get("run_metadata") or {}).get("failure_class"),
     }
     logger.info("state_transition %s", json.dumps(summary))
 

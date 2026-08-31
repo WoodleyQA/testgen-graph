@@ -82,8 +82,14 @@ def evaluate(requirement_key: str, generated_cases: list[dict]) -> EvalResult:
     )
 
 
-def print_report(result: EvalResult) -> None:
+def print_report(result: EvalResult, run_metadata: dict | None = None) -> None:
     print(f"\n=== {result.requirement_key} ===")
+    if run_metadata:
+        failure_class = run_metadata.get("failure_class", "unknown")
+        attempts = run_metadata.get("attempts", "?")
+        latency_s = run_metadata.get("latency_s")
+        latency_str = f"{latency_s:.2f}s" if isinstance(latency_s, (int, float)) else "?"
+        print(f"Tool path: {failure_class} (attempts={attempts}, latency={latency_str})")
     print(f"Coverage: {result.coverage_score:.0%}")
     for cat, hit in result.coverage.items():
         print(f"  [{'x' if hit else ' '}] {cat}")

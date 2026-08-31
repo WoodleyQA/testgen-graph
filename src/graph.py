@@ -40,5 +40,6 @@ if __name__ == "__main__":
         "requirement": "User can reset their password via a link emailed to their registered address. Reset links expire after 1 hour and can only be used once.",
         "generated_cases": [],
         "skeletons": [],
+        "run_metadata": {},
     })
     print(f"Generated {len(result['generated_cases'])} cases, {len(result['skeletons'])} skeletons")
