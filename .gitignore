@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+eval/results/*_human_ratings.json
+eval/baselines/
+.env
